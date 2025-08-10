@@ -1,7 +1,5 @@
 # Exam Portal - Full Stack Application
 
-![Exam Portal Screenshot](./media/exam-portal-screenshot.png) <!-- Add actual screenshot later -->
-
 ## Table of Contents
 
 1. [Project Overview](#project-overview)
