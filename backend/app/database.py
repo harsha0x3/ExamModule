@@ -13,8 +13,9 @@ port = os.getenv("DB_PORT")
 db_name = os.getenv("DB_NAME")
 encoded_password = urllib.parse.quote_plus(password)
 
-DATABASE_URL = f"mysql+pymysql://{username}:{encoded_password}@{host}:{port}/{db_name}"
+# DATABASE_URL = f"mysql+pymysql://{username}:{encoded_password}@{host}:{port}/{db_name}"
 
+DATABASE_URL = os.getenv("DB_URL")
 
 engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)

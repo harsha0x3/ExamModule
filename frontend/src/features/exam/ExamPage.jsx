@@ -17,14 +17,12 @@ export default function ExamPage() {
   const [answers, setAnswers] = useState({});
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  // Prevent multiple submissions and autosaves
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasExpired, setHasExpired] = useState(false);
   const autosaveInProgress = useRef(false);
 
   useEffect(() => {
     if (data) {
-      // Check if session is already submitted
       if (
         data.session.status === "submitted" ||
         data.session.status === "auto_submitted"
@@ -33,7 +31,6 @@ export default function ExamPage() {
         nav("/dashboard");
         return;
       }
-
       const a = {};
       (data.answers || []).forEach((x) => {
         a[x.session_question_id] = x.selected_option_id;
@@ -42,10 +39,8 @@ export default function ExamPage() {
     }
   }, [data, nav]);
 
-  // Autosave every 30s - but only if session is active
   useEffect(() => {
     if (isSubmitting || hasExpired) return;
-
     const id = setInterval(() => {
       if (!isSubmitting && !hasExpired) {
         doAutosave();
@@ -73,7 +68,6 @@ export default function ExamPage() {
       console.log("Autosaved successfully");
     } catch (e) {
       console.error("Autosave error:", e);
-      // If autosave fails because session is already submitted, stop trying
       if (e.status === 400) {
         console.log("Session already submitted, stopping autosave");
         setIsSubmitting(true);
@@ -89,11 +83,7 @@ export default function ExamPage() {
   };
 
   const onSubmit = useCallback(async () => {
-    if (isSubmitting) {
-      console.log("Already submitting, ignoring");
-      return;
-    }
-
+    if (isSubmitting) return;
     setIsSubmitting(true);
 
     const payload = {
@@ -116,30 +106,22 @@ export default function ExamPage() {
   }, [sessionId, answers, submit, nav, isSubmitting]);
 
   const onExpire = useCallback(async () => {
-    if (hasExpired || isSubmitting) {
-      console.log("Already expired or submitting, ignoring");
-      return;
-    }
-
+    if (hasExpired || isSubmitting) return;
     console.log("Timer expired, auto-submitting");
     setHasExpired(true);
-
-    // Try to autosave first, but don't wait if it fails
     try {
       if (!autosaveInProgress.current) {
         await doAutosave();
       }
-    } catch (e) {
+    } catch {
       console.log("Final autosave failed, proceeding with submit");
     }
-
     await onSubmit();
   }, [doAutosave, onSubmit, hasExpired, isSubmitting]);
 
-  if (isLoading) return <div>Loading...</div>;
+  if (isLoading) return <div className="text-gray-500">Loading...</div>;
   if (!data) return <div>No session found</div>;
 
-  // If already submitted, don't render the exam
   if (
     data.session.status === "submitted" ||
     data.session.status === "auto_submitted"
@@ -150,81 +132,80 @@ export default function ExamPage() {
   const currentQuestion = data.questions[currentIndex];
 
   return (
-    <div>
-      <h3>Exam Session #{data.session.id}</h3>
+    <div className="max-w-3xl mx-auto p-6">
+      <h3 className="text-2xl font-semibold mb-4">
+        Exam Session #{data.session.id}
+      </h3>
       <Timer endsAt={data.session.ends_at} onExpire={onExpire} />
 
       {isSubmitting && (
-        <div style={{ color: "orange" }}>Submitting exam...</div>
+        <div className="text-orange-500 mt-2">Submitting exam...</div>
       )}
       {hasExpired && (
-        <div style={{ color: "red" }}>Time expired! Auto-submitting...</div>
+        <div className="text-red-500 mt-2">
+          Time expired! Auto-submitting...
+        </div>
       )}
 
-      {/* Show only one question */}
       <div
-        style={{
-          padding: 10,
-          border: "1px solid #eee",
-          marginTop: 8,
-          opacity: isSubmitting || hasExpired ? 0.5 : 1,
-          pointerEvents: isSubmitting || hasExpired ? "none" : "auto",
-        }}
+        className={`p-4 border rounded-md mt-6 transition-opacity ${
+          isSubmitting || hasExpired ? "opacity-50 pointer-events-none" : ""
+        }`}
         key={currentQuestion.session_question_id}
       >
-        <div>
-          <strong>
+        <div className="font-medium mb-4">
+          <span>
             Q{currentIndex + 1} of {data.questions.length}:
-          </strong>{" "}
+          </span>{" "}
           {currentQuestion.question.text}
         </div>
-        <div style={{ marginTop: 8 }}>
+        <div className="space-y-2">
           {currentQuestion.question.options.map((o) => (
-            <div key={o.id}>
-              <label>
-                <input
-                  type="radio"
-                  name={"sq_" + currentQuestion.session_question_id}
-                  checked={
-                    answers[currentQuestion.session_question_id] === o.id
-                  }
-                  onChange={() =>
-                    onSelect(currentQuestion.session_question_id, o.id)
-                  }
-                  disabled={isSubmitting || hasExpired}
-                />{" "}
-                {o.text}
-              </label>
-            </div>
+            <label
+              key={o.id}
+              className="flex space-x-3 p-2 border rounded-md cursor-pointer hover:bg-gray-50"
+            >
+              <input
+                type="radio"
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500"
+                name={"sq_" + currentQuestion.session_question_id}
+                checked={answers[currentQuestion.session_question_id] === o.id}
+                onChange={() =>
+                  onSelect(currentQuestion.session_question_id, o.id)
+                }
+                disabled={isSubmitting || hasExpired}
+              />
+              <span className="text-gray-700">{o.text}</span>
+            </label>
           ))}
         </div>
       </div>
 
       {/* Navigation buttons */}
-      <div style={{ marginTop: 20 }}>
+      <div className="mt-6 flex space-x-3">
         <button
           onClick={() => setCurrentIndex((i) => Math.max(i - 1, 0))}
           disabled={currentIndex === 0 || isSubmitting || hasExpired}
+          className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
         >
           Previous
         </button>
 
         {currentIndex < data.questions.length - 1 ? (
           <button
-            style={{ marginLeft: 8 }}
             onClick={() =>
               setCurrentIndex((i) => Math.min(i + 1, data.questions.length - 1))
             }
             disabled={isSubmitting || hasExpired}
+            className="px-4 py-2 rounded bg-blue-500 text-black hover:bg-blue-600 disabled:opacity-50"
           >
             Next
           </button>
         ) : (
           <button
-            className="primary"
-            style={{ marginLeft: 8 }}
             onClick={onSubmit}
             disabled={isSubmitting || hasExpired}
+            className="px-4 py-2 rounded bg-green-500 text-black hover:bg-green-600 disabled:opacity-50"
           >
             {isSubmitting ? "Submitting..." : "Submit Exam"}
           </button>
@@ -232,8 +213,8 @@ export default function ExamPage() {
 
         <button
           onClick={doAutosave}
-          style={{ marginLeft: 8 }}
           disabled={isSubmitting || hasExpired || autosaveInProgress.current}
+          className="px-4 py-2 rounded bg-yellow-400 hover:bg-yellow-500 disabled:opacity-50"
         >
           {autosaveInProgress.current ? "Saving..." : "Save now"}
         </button>

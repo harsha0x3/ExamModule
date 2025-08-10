@@ -19,12 +19,19 @@ export default function Dashboard() {
   }
 
   return (
-    <div>
-      <h2>Dashboard</h2>
-      <p>Click Start Exam to begin a timed session.</p>
-      <button className="primary" onClick={onStart}>
-        Start Exam (2 Q, 1 min)
-      </button>
+    <div className="max-w-md mx-auto mt-10">
+      <h2 className="text-2xl font-bold mb-6 text-center">Dashboard</h2>
+      <div className="bg-white p-6 rounded-lg shadow-md">
+        <p className="mb-6 text-gray-700">
+          Click Start Exam to begin a timed session.
+        </p>
+        <button
+          className="w-full bg-green-500 hover:bg-green-600 text-black py-2 rounded-md transition"
+          onClick={onStart}
+        >
+          Start Exam (2 Q, 1 min)
+        </button>
+      </div>
     </div>
   );
 }
