@@ -6,7 +6,7 @@
 2. [Technology Stack](#technology-stack)
 3. [Features Implemented](#features-implemented)
 4. [Setup Instructions](#setup-instructions)
-5. [Live Demo](#live-demo)
+5. [Live Demo and API Testing](#live-demo)
 6. [API Documentation](#api-documentation)
 7. [Project Structure](#project-structure)
 
